@@ -60,8 +60,11 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
         try:
             truepath = "./www/" + path
+            if os.path.isdir(truepath):
+                truepath += "/index.html"
             size = os.path.getsize(truepath)
             _, extension = os.path.splitext(truepath)
+
 
             return http404.Response(
                 headers={
