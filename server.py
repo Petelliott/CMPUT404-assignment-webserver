@@ -46,6 +46,16 @@ class MyWebServer(socketserver.BaseRequestHandler):
             },
             body=message)
 
+    def response405(self):
+        message = "405: method not allowed\n"
+        return http404.Response(
+            status=(405, "Method Not Allowed"),
+            headers={
+                "Content-Length": len(message),
+                "Content-Type": "text/plain",
+            },
+            body=message)
+
     ftypes = {
         ".html": "text/html",
         ".htm": "text/html",
@@ -77,7 +87,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
             return self.response404()
 
     def handleHTTP(self, req):
-        return self.serve_file(req.path)
+        if req.method == "GET":
+            return self.serve_file(req.path)
+        else:
+            return self.response405()
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
