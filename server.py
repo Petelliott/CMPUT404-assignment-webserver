@@ -1,14 +1,14 @@
-#  coding: utf-8 
+#  coding: utf-8
 import socketserver
 
 # Copyright 2013 Abram Hindle, Eddie Antonio Santos
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,14 +25,56 @@ import socketserver
 # run: python freetests.py
 
 # try: curl -v -X GET http://127.0.0.1:8080/
+import http404
+import os.path
 
 
 class MyWebServer(socketserver.BaseRequestHandler):
-    
+
     def handle(self):
-        self.data = self.request.recv(1024).strip()
-        print ("Got a request of: %s\n" % self.data)
-        self.request.sendall(bytearray("OK",'utf-8'))
+        reqfile = self.request.makefile("rw")
+        req = http404.Request.read_from(reqfile)
+        self.handleHTTP(req).write_to(reqfile)
+
+    def response404(self):
+        message = "404: file not found\n"
+        return http404.Response(
+            status=(404, "Not Found"),
+            headers={
+                "Content-Length": len(message),
+                "Content-Type": "text/plain",
+            },
+            body=message)
+
+    ftypes = {
+        ".html": "text/html",
+        ".htm": "text/html",
+        ".css": "text/css",
+    }
+
+    def serve_file(self, path):
+        names = path.split("/")
+        # don't allow unix relative paths
+        if "." in names or ".." in names:
+            return self.response404()
+
+        try:
+            truepath = "./www/" + path
+            size = os.path.getsize(truepath)
+            _, extension = os.path.splitext(truepath)
+
+            return http404.Response(
+                headers={
+                    "Content-Length": size,
+                    "Content-Type": self.ftypes.get(
+                        extension, "text/plain")
+                },
+                body = open(truepath))
+        except FileNotFoundError:
+            return self.response404()
+
+    def handleHTTP(self, req):
+        return self.serve_file(req.path)
 
 if __name__ == "__main__":
     HOST, PORT = "localhost", 8080
