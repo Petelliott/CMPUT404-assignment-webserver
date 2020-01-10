@@ -1,4 +1,19 @@
-# http objects
+# Copyright 2020 Peter Elliott
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# http Request and Response objects, designed and submitted for CMPUT
+# 404 assignment 1
 import shutil
 
 
@@ -25,6 +40,7 @@ class Request(object):
             headers[key.strip()] = val.strip()
 
         return cls(path, method, headers, stream, protocol)
+
 
 class Response(object):
     def __init__(self, status=(200, "OK"), headers={}, body=None,
