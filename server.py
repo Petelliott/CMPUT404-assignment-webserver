@@ -56,13 +56,24 @@ class MyWebServer(socketserver.BaseRequestHandler):
             },
             body=message)
 
+    def response301(self, redirect):
+        message = "301: moved permanently"
+        return http404.Response(
+            status=(301, "Moved Permanently"),
+            headers={
+                "Location": redirect,
+                "Content-Length": len(message),
+                "Content-Type": "text/plain",
+            },
+            body=message)
+
     ftypes = {
         ".html": "text/html",
         ".htm": "text/html",
         ".css": "text/css",
     }
 
-    def serve_file(self, path):
+    def serve_file(self, path, uri):
         names = path.split("/")
         # don't allow unix relative paths
         if "." in names or ".." in names:
@@ -71,7 +82,10 @@ class MyWebServer(socketserver.BaseRequestHandler):
         try:
             truepath = "./www/" + path
             if os.path.isdir(truepath):
+                if not uri.endswith("/"):
+                    return self.response301(uri + "/")
                 truepath += "/index.html"
+
             size = os.path.getsize(truepath)
             _, extension = os.path.splitext(truepath)
 
@@ -88,7 +102,9 @@ class MyWebServer(socketserver.BaseRequestHandler):
 
     def handleHTTP(self, req):
         if req.method == "GET":
-            return self.serve_file(req.path)
+            return self.serve_file(
+                req.path,
+                "http://" + req.headers["Host"] + req.path)
         else:
             return self.response405()
 
